@@ -58,9 +58,9 @@ y, i = torch.sort(bn)
 thre_index = int(total * args.percent)
 thre = y[thre_index]
 
-pruned = 0
-cfg = []
-cfg_mask = []
+pruned = 0 # Total weights of BN layers that is pruned
+cfg = [] # Numbers of channels remaining / layer
+cfg_mask = [] # Positions as matrice to show remaining node / layers
 for k, m in enumerate(model.modules()):
     if isinstance(m, nn.BatchNorm2d):
         weight_copy = m.weight.data.clone()
@@ -127,7 +127,7 @@ for [m0, m1] in zip(model.modules(), newmodel.modules()):
     elif isinstance(m0, nn.Conv2d):
         idx0 = np.squeeze(np.argwhere(np.asarray(start_mask.cpu().numpy())))
         idx1 = np.squeeze(np.argwhere(np.asarray(end_mask.cpu().numpy())))
-        print('In shape: {:d} Out shape:{:d}'.format(idx0.shape[0], idx1.shape[0]))
+        print('In shape (depth): {:d} Out shape (depth): {:d}'.format(idx0.shape[0], idx1.shape[0]))
         w = m0.weight.data[:, idx0, :, :].clone()
         w = w[idx1, :, :, :].clone()
         m1.weight.data = w.clone()

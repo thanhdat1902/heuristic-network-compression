@@ -9,14 +9,23 @@ class vgg(nn.Module):
     def __init__(self, dataset='cifar10', init_weights=True, cfg=None):
         super(vgg, self).__init__()
         if cfg is None:
-            cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512]
+            cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M']
         self.feature = self.make_layers(cfg, True)
 
         if dataset == 'cifar100':
             num_classes = 100
         elif dataset == 'cifar10':
             num_classes = 10
-        self.classifier = nn.Linear(cfg[-1], num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d((7,7))
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 1000)
+        )
         if init_weights:
             self._initialize_weights()
 
@@ -27,7 +36,7 @@ class vgg(nn.Module):
             if v == 'M':
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
-                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=False)
+                conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1, bias=True)
                 if batch_norm:
                     layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
                 else:
